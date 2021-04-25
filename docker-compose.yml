@@ -1,0 +1,87 @@
+version: '3'
+
+services:
+  openldap:
+    image: osixia/openldap
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      - LDAP_ORGANISATION=Example Inc.
+      - LDAP_DOMAIN=example.com
+      - LDAP_ADMIN_PASSWORD=ldapPassword
+    volumes:
+      - "./openldap/db:/var/lib/ldap"
+      - "./openldap/config:/etc/ldap/slapd.d"
+
+  freeradius:
+    build: freeradius
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    environment:
+      - LDAP_HOST=openldap
+      - LDAP_USER=cn=admin,dc=example,dc=com
+      - LDAP_PASS=ldapPassword
+      - LDAP_BASEDN=dc=example,dc=com
+      - LDAP_USER_BASEDN=ou=people,dc=example,dc=com
+      - LDAP_GROUP_BASEDN=ou=groups,dc=example,dc=com
+      #- LDAP_RADIUS_ACCESS_GROUP=users
+      - RADIUS_CLIENT_CREDENTIALS=0.0.0.0/0:radiusPassword
+    depends_on:
+      - openldap
+
+  phpldapadmin:
+    image: osixia/phpldapadmin
+    ports:
+      - "127.0.0.1:10080:80"
+    environment:
+      - PHPLDAPADMIN_LDAP_HOSTS=openldap
+      - PHPLDAPADMIN_HTTPS=false
+    depends_on:
+      - openldap
+
+  lam:
+    image: ldapaccountmanager/lam
+    ports:
+      - "127.0.0.1:10081:80"
+    volumes:
+      - lametc/:/etc/ldap-account-manager
+      - lamconfig/:/var/lib/ldap-account-manager/config
+      - lamsession/:/var/lib/ldap-account-manager/sess
+    environment:
+      - LDAP_DOMAIN=example.com
+      - LDAP_BASE_DN=dc=example,dc=com
+      - LDAP_USERS_DN=ou=people,dc=example,dc=com
+      - LDAP_GROUPS_DN=ou=groups,dc=example,dc=com
+      - LDAP_SERVER=ldap://openldap:389
+      - LAM_LANG=ja_JP
+      - LAM_PASSWORD=lamPassword
+      - VIRTUAL_HOST=lam
+      - CERT_NAME=ldap
+
+  plp-nginx:
+    build: ./plp-nginx
+    ports:
+      - "127.0.0.1:10082:80"
+    volumes:
+      - ./plp-php/plp:/var/www/html
+    depends_on:
+      - plp-php
+
+  plp-php:
+    build: ./plp-php
+    environment:
+      - LDAP_HOST=openldap
+      - LDAP_USER=cn=admin,dc=example,dc=com
+      - LDAP_PASS=ldapPassword
+      - LDAP_BASEDN=dc=example,dc=com
+    volumes:
+      - ./plp-php/plp:/var/www/html
+    depends_on:
+      - openldap
+
+volumes:
+  lametc:
+  lamconfig:
+  lamsession:
