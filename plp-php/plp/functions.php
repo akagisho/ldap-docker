@@ -181,14 +181,14 @@ function display_template ($template = "", $error = "", $success = "") {
 		// Display the administrator form and any error or success
 		// messages.
 		if (strcmp("<!-- INSERT PHPLDAPPASSWD ADMINFORM -->", "$tmpBuf") == 0) {
-			display_form($_SERVER[PHP_SELF], FORM_ADMIN);
+			display_form(basename($_SERVER[PHP_SELF]), FORM_ADMIN);
 			continue;
 		}
 
 		// Display the password change form and any error or
 		// success messages.
 		if (strcmp("<!-- INSERT PHPLDAPPASSWD CHANGEFORM -->", "$tmpBuf") == 0) {
-			display_form($_SERVER[PHP_SELF], FORM_CHANGE);
+			display_form(basename($_SERVER[PHP_SELF]), FORM_CHANGE);
 			continue;
 		}
 
@@ -209,7 +209,7 @@ function display_template ($template = "", $error = "", $success = "") {
 		// Display the password reset form and any error or
 		// success messages.
 		if (strcmp("<!-- INSERT PHPLDAPPASSWD RESETFORM -->", "$tmpBuf") == 0) {
-			display_form($_SERVER[PHP_SELF], FORM_RESET);
+			display_form(basename($_SERVER[PHP_SELF]), FORM_RESET);
 			continue;
 		}
 
